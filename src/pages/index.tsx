@@ -1,11 +1,18 @@
-import { styled } from "@/styles";
-
-const Button = styled('button', {
-  background: "$green500"
-})
+import { HomeContainer, Product } from "@/styles/pages/home";
+import Image from "next/image";
+import logoImg from '@/assets/logo.svg'
 
 export default function Home() {
   return (
-    <Button>Hello</Button>
+    <HomeContainer>
+      <Product >
+        <Image src={logoImg.src} width={520} height={480} alt=""/>
+
+        <footer>
+          <strong>Camiseta X</strong>
+          <span>R$ 79,90</span>
+        </footer>
+      </Product>
+    </HomeContainer>
   );
 }
