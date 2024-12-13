@@ -1,6 +1,10 @@
 import { stripe } from "@/lib/stripe";
 import { ImageContainer, ProductContainer, ProductDetails } from "@/styles/pages/product";
-import { GetStaticProps } from "next";
+import axios from "axios";
+import { GetStaticPaths, GetStaticProps } from "next";
+import Image from "next/image";
+import { useRouter } from "next/router";
+import { useState } from "react";
 import Stripe from "stripe";
 
 interface ProductProps {
@@ -10,14 +14,35 @@ interface ProductProps {
         imageUrl: string
         price: string
         description: string
+        priceId: string
     }
   }
 
 export default function Product({product}: ProductProps) {
-    return (
-        <ProductContainer>
-            <ImageContainer>
+    const [isCreatingCheckoutSession, setIsCreatingCheckoutSession] = useState(false)
 
+    async function handleBuyProduct() {
+        try {
+            setIsCreatingCheckoutSession(true)
+
+            const response = await axios.post('/api/checkout', {
+                priceId: product.priceId
+            })
+    
+            const { checkoutUrl } = response.data
+    
+            window.location.href = checkoutUrl
+        } catch (err) {
+            setIsCreatingCheckoutSession(false)
+
+            alert('Falha ao redirecionar ao checkout!')
+        }
+    }
+
+    return (
+        <ProductContainer >
+            <ImageContainer>
+                <Image src={product.imageUrl} width={520} height={480} alt="" />
             </ImageContainer>
 
             <ProductDetails>
@@ -26,12 +51,23 @@ export default function Product({product}: ProductProps) {
 
                 <p>{product.description}</p>
 
-                <button>
+                <button onClick={handleBuyProduct} disabled={isCreatingCheckoutSession}>
                     Comprar agora
                 </button>
             </ProductDetails>
         </ProductContainer>
     )
+}
+
+export const getStaticPaths: GetStaticPaths = async ( ) => {
+    return {
+        paths: [
+            {
+                params: { id: 'prod_ROM8RfbnT8mazQ' }
+            }
+        ],
+        fallback: 'blocking'
+    }
 }
 
 export const getStaticProps: GetStaticProps<any, {id: string}> = async ({ params }) => {
@@ -50,7 +86,8 @@ export const getStaticProps: GetStaticProps<any, {id: string}> = async ({ params
             style: 'currency',
             currency: 'BRL',
         }).format(price.unit_amount ? (price.unit_amount / 100) : 0),
-        description: product.description
+        description: product.description,
+        priceId: price.id
     }
   
     return {
